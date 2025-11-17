@@ -15,6 +15,9 @@ export default function ChatPage() {
     const [isWaitingForResponse, setIsWaitingForResponse] = useState(false)
     const chatContainerRef = useRef<HTMLDivElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+    const messagesRef = useRef<Message[]>([])
+    const latestAssistantContentRef = useRef("")
+    const animationFrameRef = useRef<number | null>(null)
 
     useEffect(() => {
         fetch(`/api/chats/${chatId}/messages`)
@@ -23,8 +26,44 @@ export default function ChatPage() {
     }, [chatId])
 
     useEffect(() => {
+        messagesRef.current = messages
         chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight)
     }, [messages])
+
+    useEffect(() => {
+        return () => {
+            if (animationFrameRef.current !== null) {
+                cancelAnimationFrame(animationFrameRef.current)
+            }
+        }
+    }, [])
+
+    const scheduleAssistantUpdate = (content: string) => {
+        latestAssistantContentRef.current = content
+
+        const flushUpdate = () => {
+            animationFrameRef.current = null
+            const latest = latestAssistantContentRef.current
+            setMessages((prev) => {
+                if (prev.length === 0) return prev
+                const updated = [...prev]
+                const lastIndex = updated.length - 1
+                if (updated[lastIndex]?.role === "assistant") {
+                    updated[lastIndex] = { ...updated[lastIndex], content: latest }
+                }
+                return updated
+            })
+        }
+
+        if (typeof window === "undefined") {
+            flushUpdate()
+            return
+        }
+
+        if (animationFrameRef.current === null) {
+            animationFrameRef.current = window.requestAnimationFrame(flushUpdate)
+        }
+    }
 
     const handleSend = async () => {
         if (!input.trim() || isWaitingForResponse) return
@@ -41,24 +80,26 @@ export default function ChatPage() {
                 headers: { "Content-Type": "application/json" },
             })
 
-            const { newMessage } = await chat([...messages, userMessage])
+            const history = [...messagesRef.current, userMessage]
+            const { newMessage } = await chat(history)
             let textContent = ""
             const assistantMessage: Message = { role: "assistant", content: "" }
             setMessages((prev) => [...prev, assistantMessage])
 
             for await (const chunk of readStreamableValue(newMessage)) {
-                textContent += chunk
-                assistantMessage.content = textContent
-                setMessages((prev) => {
-                    const updated = [...prev]
-                    updated[updated.length - 1] = assistantMessage
-                    return updated
-                })
+                textContent += chunk ?? ""
+                scheduleAssistantUpdate(textContent)
+            }
+            scheduleAssistantUpdate(textContent)
+
+            const savedAssistantMessage: Message = {
+                role: "assistant",
+                content: textContent,
             }
 
             await fetch(`/api/chats/${chatId}/messages`, {
                 method: "POST",
-                body: JSON.stringify(assistantMessage),
+                body: JSON.stringify(savedAssistantMessage),
                 headers: { "Content-Type": "application/json" },
             })
         } finally {
