@@ -44,7 +44,7 @@ export const Sidebar: FC<Props> = ({
         >
             {/* Header */}
             <div className={`p-2 h-[72px] flex items-center ${isSidebarOpen ? "justify-between" : "justify-center"}`}>
-                {isSidebarOpen && <GPTLogo className="w-8.5 h-8.5" />}
+                {isSidebarOpen && <img src="/logo.png" alt="chitgem" className="w-8.5 h-8.5 grayscale" />}
                 <button
                     onClick={() => setSidebarOpen(!isSidebarOpen)}
                     className="p-2 hover:bg-zinc-700 rounded-md"

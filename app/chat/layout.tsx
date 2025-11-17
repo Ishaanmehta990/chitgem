@@ -108,7 +108,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 <header className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-10">
                     <div className="flex items-center gap-2">
                         <h1 className="text-xl flex gap-1 items-center">
-                            {activeChat?.title ?? "Chatter"} <ChevronDown size={20} />
+                            {activeChat?.title ?? "chitgem"} <ChevronDown size={20} />
                         </h1>
                     </div>
                     <div className="w-8" />
