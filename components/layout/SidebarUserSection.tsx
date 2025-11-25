@@ -12,7 +12,6 @@ export const SidebarUserSection = ({ isSidebarOpen }: { isSidebarOpen: boolean }
                 {isSidebarOpen && (
                     <>
                         <div className="flex-1 overflow-hidden">
-                            <p className="font-semibold truncate">Narayan Raghuwanshi</p>
                             <p className="text-xs text-zinc-400">Free</p>
                         </div>
                         <button className="ml-auto px-3 py-1 text-xs bg-zinc-700 rounded-md hover:bg-zinc-600">
